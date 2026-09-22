@@ -3,6 +3,7 @@
 from langgraph.graph import END, START, StateGraph
 
 from aifactory.agents import (
+    MAX_SANDBOX_FAILURES,
     architect_agent,
     coder_agent,
     docker_tester_agent,
@@ -17,7 +18,7 @@ def route_after_docker(state: FactoryState) -> str:
     """SUCCESS ends. FAILED retries the coder while retry_count < 3, else ends."""
     if state.get("test_result") == "SUCCESS":
         return END
-    if int(state.get("retry_count") or 0) < 3:
+    if int(state.get("retry_count") or 0) < MAX_SANDBOX_FAILURES:
         return CODER_NODE
     return END
 
