@@ -57,6 +57,19 @@ python -m aifactory "帮我写一个用户管理模块，包含注册、登录�
 
 重试上限是 3 次沙箱失败：每次失败后 `retry_count` 加 1，小于 3 才回到编码节点，到达 3 就停止并结束。
 
+## 仪表盘
+
+另开两个终端。先启动 SSE 接口，再启动页面：
+
+```bash
+uvicorn aifactory.server:app --host 0.0.0.0 --port 8000
+pip install -r requirements.txt && streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
+```
+
+浏览器打开 http://localhost:8501 。页面把任务 POST 到 http://localhost:8000/api/factory/run ，按 SSE 事件刷新四个智能体、代码、Schema、测试和终端。
+
+侧栏勾选「强制启用 Docker 沙盒」（默认开启）时，沙箱行为与命令行一致。取消勾选则不执行真实 `docker run`，日志里记一条已跳过，流水线仍会结束。生成代码不会在宿主机上执行。
+
 ## 自测
 
 ```bash

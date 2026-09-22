@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import os
 import subprocess
 from pathlib import Path
@@ -13,6 +14,13 @@ DOCKER_IMAGE = "python:3.10-slim"
 DOCKER_SHELL_CMD = "pip install fastapi httpx pytest pydantic -q && pytest test_main.py"
 DOCKER_TIMEOUT_SECONDS = 60
 MAX_SANDBOX_FAILURES = 3
+DOCKER_SKIPPED_LOG = "已跳过真实 Docker 沙盒运行。"
+
+# Default on. The SSE API sets this per request; the CLI leaves it enabled.
+docker_sandbox_enabled: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "aifactory_docker_sandbox_enabled",
+    default=True,
+)
 
 
 def get_llm():
@@ -151,6 +159,9 @@ def _failed(state: FactoryState, logs: str) -> dict:
 
 
 def docker_tester_agent(state: FactoryState) -> dict:
+    if not docker_sandbox_enabled.get():
+        print(f"【沙箱】{DOCKER_SKIPPED_LOG}", flush=True)
+        return {"test_result": "SUCCESS", "error_logs": DOCKER_SKIPPED_LOG}
     print("【沙箱】正在 Docker 中运行 pytest。", flush=True)
     try:
         sandbox = sandbox_path()
